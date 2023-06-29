@@ -99,16 +99,17 @@ sudo sed -i 's/^#ParallelDownloads = 5/ParallelDownloads = 50/' /mnt/etc/pacman.
 
 # Mounting the partition into /mnt
 echo "Mounting the partition into /mnt..."
-sudo mkfs.ext4 "$disk"2
-sudo mount "$disk"2 /mnt
+mkfs.ext4 "$disk"2
+mount "$disk"2 /mnt
 
 echo "Partition mounted successfully."
 # Mounting the EFI partition
 if [ "$installation_type" = "1" ]; then
     echo "Creating /mnt/boot/efi directory..."
-    sudo mkdir -p /mnt/boot/efi
+    mkdir /mnt/boot/
+    mkdir /mnt/boot/efi/
     echo "Mounting the EFI partition into /mnt/boot/efi..."
-    sudo mount "$disk"1 /mnt/boot/efi
+    mount "$disk"1 /mnt/boot/efi
     echo "EFI partition mounted successfully."
 fi
 
@@ -148,7 +149,7 @@ genfstab -U /mnt >> /mnt/etc/fstab
 arch-chroot /mnt
 
 # configuring
-sudo sed -i 's/^#ParallelDownloads = 5/ParallelDownloads = 50/' etc/pacman.conf
+sed -i 's/^#ParallelDownloads = 5/ParallelDownloads = 50/' etc/pacman.conf
 ln -sf /usr/share/zoneinfo/Africa/Algiers /etc/localtime
 hwclock --systohc
 sed -i '/^#en_US.UTF-8/s/^#//' /etc/locale.gen
