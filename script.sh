@@ -93,7 +93,7 @@ done
 echo "You selected $desktop_manager as your favorite desktop manager."
 # Retriving the fastest servers
 echo "Retriving the fastest servers for a fastest installation..."
-reflector --latest 50 --sort rate --save /etc/pacman.d/mirrorlist
+reflector --latest 10 --sort rate --save /etc/pacman.d/mirrorlist
 
 sudo sed -i 's/^#ParallelDownloads = 5/ParallelDownloads = 50/' /mnt/etc/pacman.conf
 
