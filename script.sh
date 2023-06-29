@@ -57,29 +57,120 @@ while [ "$valid_input" = false ]; do
     fi
 done
 # Asking the user his favourite desktop manager
-echo "Plase enter your favorite desktop manager : "
-exit 0
+valid_input=false
 
-# Retriving the fastest servers 
-reflector 
+while [ "$valid_input" = false ]; do
+    echo -e "Please enter your favorite desktop manager:\n[\e[1;37m1\e[0m] \e[1;37mi3\e[0m\n[\e[1;37m2\e[0m] \e[1;37mKDE Plasma\e[0m\n[\e[1;37m3\e[0m] \e[1;37mGNOME\e[0m\n[\e[1;37m4\e[0m] \e[1;37mXFCE4\e[0m\n[\e[1;37m5\e[0m] \e[1;37mDeepin\e[0m"
+    read -r desktop_manager_choice
 
+    case "$desktop_manager_choice" in
+        "1")
+            desktop_manager="i3"
+            valid_input=true
+            ;;
+        "2")
+            desktop_manager="KDE Plasma"
+            valid_input=true
+            ;;
+        "3")
+            desktop_manager="GNOME"
+            valid_input=true
+            ;;
+        "4")
+            desktop_manager="XFCE4"
+            valid_input=true
+            ;;
+        "5")
+            desktop_manager="Deepin"
+            valid_input=true
+            ;;
+        *)
+            echo "Invalid input. Please enter a number from 1 to 5."
+            ;;
+    esac
+done
 
+echo "You selected $desktop_manager as your favorite desktop manager."
+# Retriving the fastest servers
+echo "Retriving the fastest servers for a fastest installation..."
+reflector --latest 50 --sort rate --save /etc/pacman.d/mirrorlist
+
+sudo sed -i 's/^#ParallelDownloads = 5/ParallelDownloads = 50/' /mnt/etc/pacman.conf
+
+# Mounting the partition into /mnt
+echo "Mounting the partition into /mnt..."
+sudo mkfs.ext4 "$disk"2
+sudo mount "$disk"2 /mnt
+
+echo "Partition mounted successfully."
+# Mounting the EFI partition
+if [ "$installation_type" = "1" ]; then
+    echo "Creating /mnt/boot/efi directory..."
+    sudo mkdir -p /mnt/boot/efi
+    echo "Mounting the EFI partition into /mnt/boot/efi..."
+    sudo mount "$disk"1 /mnt/boot/efi
+    echo "EFI partition mounted successfully."
+fi
+
+# Downloading packages and additional packages based on window manager
+additional_packages=""
+
+case "$desktop_manager" in
+    "i3")
+        additional_packages="i3"
+        ;;
+    "KDE Plasma")
+        additional_packages="plasma sddm"
+        ;;
+    "GNOME")
+        additional_packages="gnome gdm"
+        ;;
+    "XFCE4")
+        additional_packages="xfce4"
+        ;;
+    "Deepin")
+        additional_packages="deepin"
+        ;;
+    *)
+        echo "Invalid desktop manager selection."
+        ;;
+esac
+if [ -n "$additional_packages" ]; then
+    echo echo "Downloading packages..."
+    pacstrap /mnt linux linux-firmware base base-devel grub efibootmgr networkmanager sudo nano $additional_packages
+fi
+echo "Packages downloaded and installed successfully."
 
 # Generating fstab
 genfstab -U /mnt >> /mnt/etc/fstab
+
 # mounting chroot
 arch-chroot /mnt
+
 # configuring
+sudo sed -i 's/^#ParallelDownloads = 5/ParallelDownloads = 50/' etc/pacman.conf
 ln -sf /usr/share/zoneinfo/Africa/Algiers /etc/localtime
 hwclock --systohc
 sed -i '/^#en_US.UTF-8/s/^#//' /etc/locale.gen
 locale-gen
 echo LANG=en_US.UTF-8 > /etc/locale.conf
 echo KEYMAP=de-latin1 > /etc/vconsole.conf
-echo archiee > /etc/hostname
+echo ArchLinuxPC > /etc/hostname
 
 systemctl enable NetworkManager
-systemctl enable lxdm
 
-grub-install --target i386-pc /dev/sda
-grub-mkconfig -o /boot/grub/grub.cfg
+
+if [ "$installation_type" = "1" ]; then
+    echo "Installing grub"
+    grub-install --target x64_86-efi --efi-directory /boot/efi/
+    grub-mkconfig -o /boot/grub/grub.cfg
+elif [ "$installation_type" = "2" ]; then
+    grub-install --target i386-pc "$disk"
+    grub-mkconfig -o /boot/grub/grub.cfg
+fi
+
+echo "Installation complete"
+
+
+
+
