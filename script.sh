@@ -100,21 +100,21 @@ echo "You selected $desktop_manager as your favorite desktop manager."
 echo "Retrieving the fastest servers for a faster installation..."
 reflector --latest 10 --sort rate --save /etc/pacman.d/mirrorlist
 
-sudo sed -i 's/^#ParallelDownloads = 5/ParallelDownloads = 50/' /mnt/etc/pacman.conf
+sudo sed -i 's/^#ParallelDownloads = 5/ParallelDownloads = 50/' /etc/pacman.conf
 
-# Mounting the partition into /mnt
-echo "Mounting the partition into /mnt..."
-mkfs.ext4 "$disk"2
-mount "$disk"2 /mnt
-
-echo "Partition mounted successfully."
-# Mounting the EFI partition
+# Mounting the partitions
 if [ "$installation_type" = "1" ]; then
+    mount "$disk"2 /mnt
     echo "Creating /mnt/boot/efi directory..."
-    mkdir -p /mnt/boot/efi
+    mkdir /mnt/boot/
+    mkdir /mnt/boot/efi
     echo "Mounting the EFI partition into /mnt/boot/efi..."
     mount "$disk"1 /mnt/boot/efi
     echo "EFI partition mounted successfully."
+else
+    # mbr
+    mount "$disk"1 /mnt
+    echo "MBR partition mounted successfully."    
 fi
 
 # Downloading packages and additional packages based on the window manager
