@@ -74,6 +74,27 @@ while [ "$valid_input" = false ]; do
     read root_password_confirm
     if ["$root_password" = "$root_password_confirm"]; then 
         valid_input = true
+    else
+        echo "The password given are not the same!"
+        sleep 1s
+        clear
+    fi
+done
+
+"$valid_input" = false 
+echo -e "Lets create a user\nGive him a username: "
+read username
+while [ "$valid_input" = false ]; do
+    echo "Plase enter $username password: "
+    read user_password
+    echo "confirm $username password: "
+    read user_password_confirm
+    if ["$user_password" = "$user_password_confirm"]; then 
+        valid_input = true
+     else
+        echo "The password given are not the same!"
+        sleep 1s
+        clear
     fi
 done
 clear
@@ -143,6 +164,9 @@ esac
 
 echo "enter a session manager : "
 read session_manager
+
+echo "Do you want to user XORG or WAYLAND: "
+read xorg_wayland
 clear
 # Mounting the partitions
 if [ "$installation_type" = "1" ]; then
@@ -166,7 +190,7 @@ reflector --latest 3  --sort rate --save /etc/pacman.d/mirrorlist
 sudo sed -i 's/^#ParallelDownloads = 5/ParallelDownloads = 15/' /etc/pacman.conf
 
 echo "Downloading packages..."
-pacstrap /mnt linux linux-firmware base base-devel grub efibootmgr networkmanager sudo nano $window_manager $additional_packages $session_manager
+pacstrap /mnt linux linux-firmware base base-devel grub efibootmgr networkmanager sudo nano $xorg_wayland $window_manager $additional_packages $session_manager
 
 
 echo "Packages downloaded and installed successfully."
@@ -182,7 +206,9 @@ ln -sf /usr/share/zoneinfo/Africa/Algiers /etc/localtime
 hwclock --systohc
 sed -i '/^#en_US.UTF-8/s/^#//' /etc/locale.gen
 locale-gen
-passwd $root_password
+echo "root:$root_password" | chpasswd
+useradd -m $username -G wheel
+echo "$username:$user_password" | chpasswd
 echo LANG=en_US.UTF-8 > /etc/locale.conf
 echo KEYMAP=$keyboard_layout > /etc/vconsole.conf
 echo $host_name > /etc/hostname
