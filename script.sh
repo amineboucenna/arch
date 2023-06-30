@@ -183,7 +183,7 @@ sed -i '/^#en_US.UTF-8/s/^#//' /etc/locale.gen
 locale-gen
 passwd $root_password
 echo LANG=en_US.UTF-8 > /etc/locale.conf
-echo KEYMAP=de-latin1 > /etc/vconsole.conf
+echo KEYMAP=$keyboard_layout > /etc/vconsole.conf
 echo $host_name > /etc/hostname
 
 systemctl enable NetworkManager
