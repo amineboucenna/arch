@@ -74,8 +74,8 @@ while [ "$valid_input" = false ]; do
     read root_password
     echo "confirm root password: "
     read root_password_confirm
-    if ["$root_password" = "$root_password_confirm"]; then 
-        valid_input = true
+    if [ "$root_password" = "$root_password_confirm" ]; then 
+        valid_input=true
     else
         echo "The password given are not the same!"
         sleep 1s
@@ -83,7 +83,7 @@ while [ "$valid_input" = false ]; do
     fi
 done
 
-"$valid_input" = false 
+valid_input=false 
 echo -e "Lets create a user\nGive him a username: "
 read username
 while [ "$valid_input" = false ]; do
@@ -91,8 +91,8 @@ while [ "$valid_input" = false ]; do
     read user_password
     echo "confirm $username password: "
     read user_password_confirm
-    if ["$user_password" = "$user_password_confirm"]; then 
-        valid_input = true
+    if [ "$user_password" = "$user_password_confirm" ]; then 
+        valid_input=true
      else
         echo "The password given are not the same!"
         sleep 1s
