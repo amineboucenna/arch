@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Welcome message
 echo -e "\e[33mWelcome to ArchLinux Installation Script. After this installation, you will be able to say \e[36m'I use Arch btw.'\e[0m\e[0m"
@@ -56,7 +56,12 @@ while [ "$valid_input" = false ]; do
         echo "Invalid input. Please enter either 1 or 2."
     fi
 done
-# Asking the user his favourite desktop manager
+
+# Resizing the partition to accommodate the installation
+echo "Resizing the partition..."
+sudo resize2fs "$disk"1
+
+# Asking the user his favorite desktop manager
 valid_input=false
 
 while [ "$valid_input" = false ]; do
@@ -91,8 +96,8 @@ while [ "$valid_input" = false ]; do
 done
 
 echo "You selected $desktop_manager as your favorite desktop manager."
-# Retriving the fastest servers
-echo "Retriving the fastest servers for a fastest installation..."
+# Retrieving the fastest servers
+echo "Retrieving the fastest servers for a faster installation..."
 reflector --latest 10 --sort rate --save /etc/pacman.d/mirrorlist
 
 sudo sed -i 's/^#ParallelDownloads = 5/ParallelDownloads = 50/' /mnt/etc/pacman.conf
@@ -106,14 +111,13 @@ echo "Partition mounted successfully."
 # Mounting the EFI partition
 if [ "$installation_type" = "1" ]; then
     echo "Creating /mnt/boot/efi directory..."
-    mkdir /mnt/boot/
-    mkdir /mnt/boot/efi/
+    mkdir -p /mnt/boot/efi
     echo "Mounting the EFI partition into /mnt/boot/efi..."
     mount "$disk"1 /mnt/boot/efi
     echo "EFI partition mounted successfully."
 fi
 
-# Downloading packages and additional packages based on window manager
+# Downloading packages and additional packages based on the window manager
 additional_packages=""
 
 case "$desktop_manager" in
@@ -136,19 +140,21 @@ case "$desktop_manager" in
         echo "Invalid desktop manager selection."
         ;;
 esac
+
 if [ -n "$additional_packages" ]; then
-    echo echo "Downloading packages..."
+    echo "Downloading packages..."
     pacstrap /mnt linux linux-firmware base base-devel grub efibootmgr networkmanager sudo nano $additional_packages
 fi
+
 echo "Packages downloaded and installed successfully."
 
 # Generating fstab
 genfstab -U /mnt >> /mnt/etc/fstab
 
-# mounting chroot
+# Mounting chroot
 arch-chroot /mnt /bin/bash <<EOF
-# configuring
-sed -i 's/^#ParallelDownloads = 5/ParallelDownloads = 50/' etc/pacman.conf
+# Configuring
+sed -i 's/^#ParallelDownloads = 5/ParallelDownloads = 50/' /etc/pacman.conf
 ln -sf /usr/share/zoneinfo/Africa/Algiers /etc/localtime
 hwclock --systohc
 sed -i '/^#en_US.UTF-8/s/^#//' /etc/locale.gen
@@ -161,15 +167,13 @@ systemctl enable NetworkManager
 
 if [ "$installation_type" = "1" ]; then
     echo "Installing grub for EFI"
-    grub-install --target x86_64-efi --efi-directory /boot/efi/
+    grub-install --target=x86_64-efi --efi-directory=/boot/efi
     grub-mkconfig -o /boot/grub/grub.cfg
 elif [ "$installation_type" = "2" ]; then
     echo "Installing grub for MBR"
-    grub-install --target i386-pc "$disk"
+    grub-install --target=i386-pc "$disk"
     grub-mkconfig -o /boot/grub/grub.cfg
 fi
 
 echo "Installation complete"
 EOF
-
-
