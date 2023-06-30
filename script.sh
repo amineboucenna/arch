@@ -30,7 +30,10 @@ while [ "$valid_input" = false ]; do
     fi
 done
 
-echo -e "o\nw" | sudo fdisk "$disk"
+#echo -e "o\nw" | sudo fdisk "$disk"
+echo -e "d\n" | fdisk "$disk"
+echo -e "w\n" | fdisk "$disk"
+
 echo "Your disk is ready for installation..."
 clear
 # Asking the user about the installation type: EFI or MBR
