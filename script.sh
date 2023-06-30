@@ -41,6 +41,7 @@ while [ "$valid_input" = false ]; do
     read -r installation_type
 
     if [ "$installation_type" = "1" ]; then
+    echo -e "g\nw" | fdisk "$disk"
         echo "Creating partitions for EFI (GPT) installation..."
         sudo parted "$disk" mklabel gpt
         sudo parted "$disk" mkpart primary fat32 1MiB 500MiB
@@ -50,6 +51,7 @@ while [ "$valid_input" = false ]; do
         mkfs.ext4 "$disk"2 
         valid_input=true
     elif [ "$installation_type" = "2" ]; then
+    echo -e "o\nw" | fdisk "$disk"
         echo "Creating partitions for MBR installation..."
         sudo parted "$disk" mklabel msdos
         sudo parted "$disk" mkpart primary ext4 1MiB 100%
