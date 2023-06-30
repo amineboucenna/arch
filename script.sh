@@ -60,6 +60,23 @@ while [ "$valid_input" = false ]; do
     fi
 done
 
+# keyboard layout
+echo -e "Please enter one keyboard layout (ex us, fr see more at archlinux wiki ): "
+read keyboard_layout
+
+# keyboard layout
+valid_input=false
+while [ "$valid_input" = false ]; do
+    echo "Plase enter root password: "
+    read root_password
+    echo "confirm root password: "
+    read root_password_confirm
+    if ["$root_password" = "$root_password_confirm"]; then 
+        valid_input = true
+    fi
+done
+
+
 # Asking the user his favorite desktop manager
 valid_input=false
 
@@ -95,6 +112,9 @@ while [ "$valid_input" = false ]; do
 done
 
 echo "You selected $desktop_manager as your favorite desktop manager."
+# custom packages
+echo "do you want to install any additional packages (ex firefox vlc ): "
+read additional_packages
 # Retrieving the fastest servers
 echo "Retrieving the fastest servers for a faster installation..."
 reflector --latest 10 --sort rate --save /etc/pacman.d/mirrorlist
@@ -116,33 +136,36 @@ else
     echo "MBR partition mounted successfully."    
 fi
 
-# Downloading packages and additional packages based on the window manager
-additional_packages=""
+# Downloading packages packages based on the window manager
+window_manager_packages=""
 
 case "$desktop_manager" in
     "i3")
-        additional_packages="i3"
+        window_manager_packages="i3"
         ;;
     "KDE Plasma")
-        additional_packages="plasma sddm"
+        window_manager_packages="plasma"
         ;;
     "GNOME")
-        additional_packages="gnome gdm"
+        window_manager_packages="gnome"
         ;;
     "XFCE4")
-        additional_packages="xfce4"
+        window_manager_packages="xfce4"
         ;;
     "Deepin")
-        additional_packages="deepin"
+        window_manager_packages="deepin"
         ;;
     *)
         echo "Invalid desktop manager selection."
         ;;
 esac
 
+echo "enter a session manager : "
+read session_manager
+
 if [ -n "$additional_packages" ]; then
     echo "Downloading packages..."
-    pacstrap /mnt linux linux-firmware base base-devel grub efibootmgr networkmanager sudo nano $additional_packages
+    pacstrap /mnt linux linux-firmware base base-devel grub efibootmgr networkmanager sudo nano $window_manager $additional_packages $session_manager
 fi
 
 echo "Packages downloaded and installed successfully."
@@ -158,11 +181,13 @@ ln -sf /usr/share/zoneinfo/Africa/Algiers /etc/localtime
 hwclock --systohc
 sed -i '/^#en_US.UTF-8/s/^#//' /etc/locale.gen
 locale-gen
+passwd $root_password
 echo LANG=en_US.UTF-8 > /etc/locale.conf
 echo KEYMAP=de-latin1 > /etc/vconsole.conf
-echo ArchLinuxPC > /etc/hostname
+echo $host_name > /etc/hostname
 
 systemctl enable NetworkManager
+systemctl enable $session_manager
 
 if [ "$installation_type" = "1" ]; then
     echo "Installing grub for EFI"
@@ -175,4 +200,11 @@ elif [ "$installation_type" = "2" ]; then
 fi
 
 echo "Installation complete"
+
+exit
+
+umount -R /mnt
+
+"Rebooting..."
+reboot
 EOF
