@@ -46,20 +46,19 @@ while [ "$valid_input" = false ]; do
         sudo parted "$disk" mkpart primary fat32 1MiB 500MiB
         sudo parted "$disk" set 1 esp on
         sudo parted "$disk" mkpart primary ext4 500MiB 100%
+        mkfs.fat -F32 "$disk"1
+        mkfs.ext4 "$disk"2 
         valid_input=true
     elif [ "$installation_type" = "2" ]; then
         echo "Creating partitions for MBR installation..."
         sudo parted "$disk" mklabel msdos
         sudo parted "$disk" mkpart primary ext4 1MiB 100%
+        mkfs.ext4 "$disk"1
         valid_input=true
     else
         echo "Invalid input. Please enter either 1 or 2."
     fi
 done
-
-# Resizing the partition to accommodate the installation
-echo "Resizing the partition..."
-sudo resize2fs "$disk"1
 
 # Asking the user his favorite desktop manager
 valid_input=false
