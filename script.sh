@@ -10,7 +10,7 @@ lsblk -l
 # Asking the user for the disk to use for installation
 echo "Please insert the disk name that you wish to use for installation (e.g., /dev/sdX): "
 read -r disk
-
+clear
 # Getting confirmation from the user
 valid_input=false
 
@@ -32,7 +32,7 @@ done
 
 echo -e "o\nw" | sudo fdisk "$disk"
 echo "Your disk is ready for installation..."
-
+clear
 # Asking the user about the installation type: EFI or MBR
 valid_input=false
 
@@ -59,6 +59,7 @@ while [ "$valid_input" = false ]; do
         echo "Invalid input. Please enter either 1 or 2."
     fi
 done
+clear
 
 # keyboard layout
 echo -e "Please enter one keyboard layout (ex us, fr see more at archlinux wiki ): "
@@ -75,7 +76,7 @@ while [ "$valid_input" = false ]; do
         valid_input = true
     fi
 done
-
+clear
 
 # Asking the user his favorite desktop manager
 valid_input=false
@@ -110,17 +111,39 @@ while [ "$valid_input" = false ]; do
             ;;
     esac
 done
-
 echo "You selected $desktop_manager as your favorite desktop manager."
+sleep 2s
+clear
 # custom packages
 echo "do you want to install any additional packages (ex firefox vlc ): "
 read additional_packages
-# Retrieving the fastest servers
-echo "Retrieving the fastest servers for a faster installation..."
-reflector --latest 10 --sort rate --save /etc/pacman.d/mirrorlist
+# Downloading packages packages based on the window manager
+window_manager_packages=""
 
-sudo sed -i 's/^#ParallelDownloads = 5/ParallelDownloads = 50/' /etc/pacman.conf
+case "$desktop_manager" in
+    "i3")
+        window_manager="i3"
+        ;;
+    "KDE Plasma")
+        window_manager="plasma"
+        ;;
+    "GNOME")
+        window_manager="gnome"
+        ;;
+    "XFCE4")
+        window_manager="xfce4"
+        ;;
+    "Deepin")
+        window_manager="deepin"
+        ;;
+    *)
+        echo "Invalid desktop manager selection."
+        ;;
+esac
 
+echo "enter a session manager : "
+read session_manager
+clear
 # Mounting the partitions
 if [ "$installation_type" = "1" ]; then
     mount "$disk"2 /mnt
@@ -136,47 +159,25 @@ else
     echo "MBR partition mounted successfully."    
 fi
 
-# Downloading packages packages based on the window manager
-window_manager_packages=""
+# Retrieving the fastest servers
+echo "Retrieving the fastest servers for a faster installation..."
+reflector --latest 3  --sort rate --save /etc/pacman.d/mirrorlist
 
-case "$desktop_manager" in
-    "i3")
-        window_manager_packages="i3"
-        ;;
-    "KDE Plasma")
-        window_manager_packages="plasma"
-        ;;
-    "GNOME")
-        window_manager_packages="gnome"
-        ;;
-    "XFCE4")
-        window_manager_packages="xfce4"
-        ;;
-    "Deepin")
-        window_manager_packages="deepin"
-        ;;
-    *)
-        echo "Invalid desktop manager selection."
-        ;;
-esac
+sudo sed -i 's/^#ParallelDownloads = 5/ParallelDownloads = 15/' /etc/pacman.conf
 
-echo "enter a session manager : "
-read session_manager
+echo "Downloading packages..."
+pacstrap /mnt linux linux-firmware base base-devel grub efibootmgr networkmanager sudo nano $window_manager $additional_packages $session_manager
 
-if [ -n "$additional_packages" ]; then
-    echo "Downloading packages..."
-    pacstrap /mnt linux linux-firmware base base-devel grub efibootmgr networkmanager sudo nano $window_manager $additional_packages $session_manager
-fi
 
 echo "Packages downloaded and installed successfully."
-
+clear
 # Generating fstab
 genfstab -U /mnt >> /mnt/etc/fstab
 
 # Mounting chroot
 arch-chroot /mnt /bin/bash <<EOF
 # Configuring
-sed -i 's/^#ParallelDownloads = 5/ParallelDownloads = 50/' /etc/pacman.conf
+sed -i 's/^#ParallelDownloads = 5/ParallelDownloads = 15/' /etc/pacman.conf
 ln -sf /usr/share/zoneinfo/Africa/Algiers /etc/localtime
 hwclock --systohc
 sed -i '/^#en_US.UTF-8/s/^#//' /etc/locale.gen
@@ -198,7 +199,7 @@ elif [ "$installation_type" = "2" ]; then
     grub-install --target=i386-pc "$disk"
     grub-mkconfig -o /boot/grub/grub.cfg
 fi
-
+clear
 echo "Installation complete"
 
 exit
@@ -206,5 +207,6 @@ exit
 umount -R /mnt
 
 "Rebooting..."
+sleep 2s
 reboot
 EOF
