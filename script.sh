@@ -149,10 +149,11 @@ echo "$installation_type" > installation_type.tmp
 genfstab -U /mnt >> /mnt/etc/fstab
 
 # mounting chroot
-arch-chroot /mnt
+arch-chroot /mnt /bin/bash <<EOF
 
 
 
 
+EOF
 
 
